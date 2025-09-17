@@ -1,16 +1,6 @@
 name: Check code style
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-
-  push:
-    branches:
-      - main
-
   workflow_call:
     inputs:
       prepare_env_action:
