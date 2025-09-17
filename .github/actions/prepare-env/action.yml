@@ -20,11 +20,10 @@ runs:
         echo "Installing Python core tools..."
         python -m pip install --upgrade pip
         python -m pip install pipx
-        pipx install yamllint
+        pipx install yamllint --force
 
     - name: Install core Node tools
       shell: bash
       run: |
         echo "Installing Node core tools..."
         npm install -g prettier
-        npm install -g npx
