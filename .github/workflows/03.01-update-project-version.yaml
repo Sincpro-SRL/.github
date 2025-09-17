@@ -3,14 +3,16 @@ name: Update project version
 on:
   workflow_run:
     workflows:
-      - Release draft
+      - "Release draft"
     types:
       - completed
+  workflow_call:
 
 jobs:
-
   update_project_version:
     runs-on: ubuntu-latest
+
+    if: github.event_name == 'workflow_call' || (github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Release draft' && github.event.workflow_run.conclusion == 'success')
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -48,13 +50,13 @@ jobs:
       - name: Update main branch with the new version
         run: |
           git checkout main
-          if git diff --quiet pyproject.toml; then
-            echo "No hay cambios en pyproject.toml. No se realizará commit ni push."
+          if git diff --quiet; then
+            echo "No changes detected. No commit or push will be performed."
           else
             git config user.name "GitHub Actions"
             git config user.email "actions@github.com"
-            git add pyproject.toml
-            git commit -m "chore: Actualización de versión a ${{ steps.get-latest-release.outputs.tag_name }}"
+            git add .
+            git commit -m "chore: Update version to ${{ steps.get-latest-release.outputs.tag_name }}"
             git push origin main
           fi
         env:
