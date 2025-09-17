@@ -1,0 +1,14 @@
+name: 'Default Environment Preparation'
+description: 'Default fallback environment setup - can be overridden by consumers'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Default environment info
+      shell: bash
+      run: |
+        echo "Using default environment preparation"
+        echo "Python version: $(python3 --version 2>/dev/null || echo 'Not available')"
+        echo "Node version: $(node --version 2>/dev/null || echo 'Not available')"
+        echo "Make version: $(make --version 2>/dev/null | head -1 || echo 'Not available')"
+        echo "This is a fallback action - consumer repos should provide their own prepare_env_action"

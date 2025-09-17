@@ -1,13 +1,10 @@
 name: Publish release
 
 on:
+  release:
+    types: [published]
+    
   workflow_call:
-    inputs:
-      prepare_env_action:
-        description: 'Action to initialize environment (owner/repo/path@version)'
-        required: false
-        type: string
-        default: ''
 
 env:
   GEMFURY_PUSH_TOKEN: ${{ secrets.GEMFURY_PUSH_TOKEN }}
@@ -23,8 +20,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Prepare environment
-        if: ${{ github.event_name == 'workflow_call' && inputs.prepare_env_action != '' }}
-        uses: ${{ inputs.prepare_env_action }}
+        uses: ./.github/actions/prepare-env
 
       - name: Build and Publish package
         run: |

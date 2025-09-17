@@ -1,13 +1,17 @@
 name: Check code style
 
 on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+  push:
+    branches:
+      - main
+      
   workflow_call:
-    inputs:
-      prepare_env_action:
-        description: "Action to initialize environment (owner/repo/path@version)"
-        required: false
-        type: string
-        default: ""
 
 jobs:
   checks:
@@ -19,8 +23,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Prepare environment
-        if: ${{ github.event_name == 'workflow_call' && inputs.prepare_env_action != '' }}
-        uses: ${{ inputs.prepare_env_action }}
+        uses: ./.github/actions/prepare-env
 
       - name: Initialize dependencies
         run: make init
