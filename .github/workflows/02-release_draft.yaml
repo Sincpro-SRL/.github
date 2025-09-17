@@ -1,0 +1,11 @@
+name: Create release draft
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release_draft:
+    uses: Sincpro-SRL/.github/.github/workflows/03-release_draft.yml@main
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
