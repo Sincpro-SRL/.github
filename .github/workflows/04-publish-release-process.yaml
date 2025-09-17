@@ -1,0 +1,34 @@
+name: Publish release
+
+on:
+  release:
+    types: [published]
+
+  workflow_call:
+    inputs:
+      prepare_env_action:
+        description: 'Action to initialize environment (owner/repo/path@version)'
+        required: false
+        type: string
+        default: ''
+
+env:
+  GEMFURY_PUSH_TOKEN: ${{ secrets.GEMFURY_PUSH_TOKEN }}
+  POETRY_PYPI_TOKEN: ${{ secrets.POETRY_PYPI_TOKEN }}
+
+jobs:
+  publish_package:
+    name: Release Process
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Prepare environment
+        if: inputs.prepare_env_action != ''
+        uses: ${{ inputs.prepare_env_action }}
+
+      - name: Build and Publish package
+        run: |
+          make publish

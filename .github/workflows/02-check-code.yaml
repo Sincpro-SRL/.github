@@ -1,0 +1,42 @@
+name: Check code style
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+  push:
+    branches:
+      - main
+
+  workflow_call:
+    inputs:
+      prepare_env_action:
+        description: "Action to initialize environment (owner/repo/path@version)"
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  checks:
+    name: Run formatting & lint checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Prepare environment
+        if: inputs.prepare_env_action != ''
+        uses: ${{ inputs.prepare_env_action }}
+
+      - name: Initialize dependencies
+        run: make init
+
+      - name: Verify code format
+        run: make verify-format
+
+      - name: Test
+        run: make test
