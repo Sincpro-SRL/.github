@@ -5,10 +5,14 @@ init: prepare-environment
 	@echo "Template to init dependencies project"
 
 format:
-	@echo "Template to format code"
+	@prettier --write --tab-width 2 "**/*.{yml,yaml,json,md}"
 
-verify-format:
-	@echo "Template to verify code format"
+verify-format: format
+	@if ! git diff --quiet; then \
+	  echo >&2 "✘ El formateo ha modificado archivos. Por favor agrégalos al commit."; \
+	  git --no-pager diff --name-only HEAD -- >&2; \
+	  exit 1; \
+	fi
 
 test:
 	@echo "Template to run tests"

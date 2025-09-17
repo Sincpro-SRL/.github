@@ -4,11 +4,11 @@ Centralized repository of reusable workflows and composite actions that standard
 
 ## 📋 Workflow Matrix
 
-| Stage | Trigger | Actions | Status | Result |
-|-------|---------|---------|--------|--------|
-| **Pull Request** | Open/Update | Code Style + Tests | ✅ Pass | Label added |
-| **Merge** | Push to main | Code Style + Tests + Version + Release Draft | 🔄 Process | Draft created |
-| **Release** | Publish | Deploy/Publish | 🚀 Deploy | Artifacts published |
+| Stage            | Trigger      | Actions                                      | Status     | Result              |
+| ---------------- | ------------ | -------------------------------------------- | ---------- | ------------------- |
+| **Pull Request** | Open/Update  | Code Style + Tests                           | ✅ Pass    | Label added         |
+| **Merge**        | Push to main | Code Style + Tests + Version + Release Draft | 🔄 Process | Draft created       |
+| **Release**      | Publish      | Deploy/Publish                               | 🚀 Deploy  | Artifacts published |
 
 ## 🔄 Development Flow
 
@@ -38,13 +38,13 @@ graph LR
         A3[Version Updater Action]
         A4[Publisher Action]
     end
-    
+
     subgraph "Reusable Workflows"
         W1[PR Validation Workflow]
         W2[Post-Merge Workflow]
         W3[Release Workflow]
     end
-    
+
     A1 --> W1
     A2 --> W1
     A1 --> W2
@@ -55,14 +55,14 @@ graph LR
 
 ## 📦 Responsibilities Matrix
 
-| Component | Responsibility | Reusable | Configurable |
-|-----------|----------------|----------|--------------|
-| **Code Style** | Format and linting | ✅ | ✅ |
-| **Test Runner** | Execute tests | ✅ | ✅ |
-| **PR Labeler** | Automatic labeling | ✅ | ✅ |
-| **Version Manager** | Semantic versioning | ✅ | ✅ |
-| **Release Drafter** | Changelog generation | ✅ | ✅ |
-| **Publisher** | Deploy to registries | ✅ | ✅ |
+| Component           | Responsibility       | Reusable | Configurable |
+| ------------------- | -------------------- | -------- | ------------ |
+| **Code Style**      | Format and linting   | ✅       | ✅           |
+| **Test Runner**     | Execute tests        | ✅       | ✅           |
+| **PR Labeler**      | Automatic labeling   | ✅       | ✅           |
+| **Version Manager** | Semantic versioning  | ✅       | ✅           |
+| **Release Drafter** | Changelog generation | ✅       | ✅           |
+| **Publisher**       | Deploy to registries | ✅       | ✅           |
 
 ## 🛠️ Implementation
 
@@ -82,20 +82,20 @@ secrets: inherit
 
 ## 📋 Patterns Matrix
 
-| Pattern | Purpose | Benefit | Implementation |
-|---------|---------|---------|----------------|
-| **Composite** | Reusable steps | DRY principle | Modular actions |
-| **Template Method** | Standard flow | Consistency | Base workflows |
-| **Strategy** | Flexible configuration | Adaptability | Input parameters |
-| **Observer** | Notifications | Visibility | Labels and webhooks |
+| Pattern             | Purpose                | Benefit       | Implementation      |
+| ------------------- | ---------------------- | ------------- | ------------------- |
+| **Composite**       | Reusable steps         | DRY principle | Modular actions     |
+| **Template Method** | Standard flow          | Consistency   | Base workflows      |
+| **Strategy**        | Flexible configuration | Adaptability  | Input parameters    |
+| **Observer**        | Notifications          | Visibility    | Labels and webhooks |
 
 ## 🤝 Contribution Matrix
 
-| Phase | Action | Validation | Outcome |
-|-------|--------|------------|---------|
-| **Development** | Fork & PR | Code review | Approval |
-| **Integration** | Merge | CI Pipeline | Validation |
-| **Release** | Tag & Publish | Automated tests | Availability |
+| Phase           | Action        | Validation      | Outcome      |
+| --------------- | ------------- | --------------- | ------------ |
+| **Development** | Fork & PR     | Code review     | Approval     |
+| **Integration** | Merge         | CI Pipeline     | Validation   |
+| **Release**     | Tag & Publish | Automated tests | Availability |
 
 ---
 

@@ -1,14 +1,30 @@
-name: 'Default Environment Preparation'
-description: 'Default fallback environment setup - can be overridden by consumers'
+name: "Default Environment Preparation"
+description: "Installs essential tools: pip, pipx, npm, prettier, and common formatters"
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
-    - name: Default environment info
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+
+    - name: Install core Python tools
       shell: bash
       run: |
-        echo "Using default environment preparation"
-        echo "Python version: $(python3 --version 2>/dev/null || echo 'Not available')"
-        echo "Node version: $(node --version 2>/dev/null || echo 'Not available')"
-        echo "Make version: $(make --version 2>/dev/null | head -1 || echo 'Not available')"
-        echo "This is a fallback action - consumer repos should provide their own prepare_env_action"
+        echo "Installing Python core tools..."
+        python -m pip install --upgrade pip
+        python -m pip install pipx
+        pipx install yamllint
+
+    - name: Install core Node tools
+      shell: bash
+      run: |
+        echo "Installing Node core tools..."
+        npm install -g prettier
+        npm install -g npx

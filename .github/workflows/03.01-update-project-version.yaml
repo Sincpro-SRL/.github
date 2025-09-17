@@ -25,7 +25,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
             });
-            
+
             if (allReleases.data.length === 0) {
               core.info('No previous releases found');
               core.setOutput('tag_name', '');
