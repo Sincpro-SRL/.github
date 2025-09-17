@@ -20,6 +20,7 @@ runs:
         echo "Installing Python core tools..."
         python -m pip install --upgrade pip
         python -m pip install pipx
+        pipx ensurepath
         pipx install yamllint --force
 
     - name: Install core Node tools
