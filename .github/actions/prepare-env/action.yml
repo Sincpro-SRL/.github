@@ -1,5 +1,5 @@
 name: "Default Environment Preparation"
-description: "Installs essential tools: pip, pipx, npm, prettier, and common formatters"
+description: "Installs essential tools: pip, npm, prettier, yamllint for formatting and linting"
 
 runs:
   using: "composite"
@@ -19,12 +19,21 @@ runs:
       run: |
         echo "Installing Python core tools..."
         python -m pip install --upgrade pip
-        python -m pip install pipx
-        pipx ensurepath
-        pipx install yamllint --force
+        pip install yamllint
 
     - name: Install core Node tools
       shell: bash
       run: |
         echo "Installing Node core tools..."
         npm install -g prettier
+
+    - name: Verify installation
+      shell: bash
+      run: |
+        echo "Verification complete:"
+        echo "✓ Python: $(python --version)"
+        echo "✓ pip: $(pip --version)"
+        echo "✓ Node: $(node --version)"
+        echo "✓ npm: $(npm --version)"
+        echo "✓ prettier: $(prettier --version)"
+        echo "✓ yamllint: $(yamllint --version)"
