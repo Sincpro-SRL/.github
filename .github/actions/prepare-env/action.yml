@@ -1,0 +1,39 @@
+name: "Default Environment Preparation"
+description: "Installs essential tools: pip, npm, prettier, yamllint for formatting and linting"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+
+    - name: Install core Python tools
+      shell: bash
+      run: |
+        echo "Installing Python core tools..."
+        python -m pip install --upgrade pip
+        pip install yamllint
+
+    - name: Install core Node tools
+      shell: bash
+      run: |
+        echo "Installing Node core tools..."
+        npm install -g prettier
+
+    - name: Verify installation
+      shell: bash
+      run: |
+        echo "Verification complete:"
+        echo "✓ Python: $(python --version)"
+        echo "✓ pip: $(pip --version)"
+        echo "✓ Node: $(node --version)"
+        echo "✓ npm: $(npm --version)"
+        echo "✓ prettier: $(prettier --version)"
+        echo "✓ yamllint: $(yamllint --version)"

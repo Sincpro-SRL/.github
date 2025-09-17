@@ -2,8 +2,8 @@
 
 ## Description Dev notes
 
--   Dev note
+- Dev note
 
 ## Checklist
 
--   [ ] Did you test manually the changes
+- [ ] Did you test manually the changes
