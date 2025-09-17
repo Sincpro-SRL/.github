@@ -6,6 +6,6 @@ on:
 
 jobs:
   release_draft:
-    uses: Sincpro-SRL/.github/workflows/03-release_draft.yml@main
+    uses: Sincpro-SRL/.github/workflows/03-release_draft.yaml
     secrets:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

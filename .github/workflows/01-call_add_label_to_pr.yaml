@@ -6,6 +6,6 @@ on:
 
 jobs:
   add_label_to_pr:
-    uses: Sincpro-SRL/.github/workflows/01-add_label_to_pr.yml@main
+    uses: Sincpro-SRL/.github/workflows/01-add_label_to_pr.yaml
     secrets:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
