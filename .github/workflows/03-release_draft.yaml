@@ -78,6 +78,11 @@ jobs:
             const sanitizedTagName = tagName.replace(/[^0-9.]/g, '');
             core.info(`version to update: ${sanitizedTagName}`);
             core.setOutput('tag_name', sanitizedTagName);
+            
+      - name: Prepare environment
+        uses: ./.github/actions/prepare-env
+        with:
+          environment: ${{ matrix.env }}      
 
       - name: Update project version
         run: |
