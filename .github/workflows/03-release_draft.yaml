@@ -4,10 +4,21 @@ on:
   push:
     branches:
       - main
-  workflow_call: {}
+  workflow_call:
+    inputs:
+      environments:
+        description: 'JSON array of string values to iterate (e.g., ''["pypi", "gemfury"]'' or ''["npm", "docker"]''). Each string becomes matrix.env and is passed to prepare-env as environment.'
+        required: false
+        type: string
+        default: '["default"]'
 
 jobs:
   release_draft:
+    strategy:
+      fail-fast: false
+      matrix:
+        env: ${{ inputs.environments && fromJSON(inputs.environments) || fromJSON('["CI/CD"]') }}
+
     name: Create / Update draft release
     runs-on: ubuntu-24.04
     steps:
@@ -32,9 +43,60 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  update_version:
+  update_project_version:
     name: Update project version
-    needs: release_draft
-    if: needs.release_draft.result == 'success'
-    uses: Sincpro-SRL/.github/.github/workflows/03.01-update_version.yaml@main
-    secrets: inherit
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        env: ${{ inputs.environments && fromJSON(inputs.environments) || fromJSON('["CI/CD"]') }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Get latest release version
+        id: get-latest-release
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const allReleases = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            if (allReleases.data.length === 0) {
+              core.info('No previous releases found');
+              core.setOutput('tag_name', '');
+              return;
+            }
+            const latestRelease = allReleases.data[0];
+            const tagName = latestRelease.tag_name;
+            core.info(`Latest release tag name: ${tagName}`);
+            const sanitizedTagName = tagName.replace(/[^0-9.]/g, '');
+            core.info(`version to update: ${sanitizedTagName}`);
+            core.setOutput('tag_name', sanitizedTagName);
+
+      - name: Update project version
+        run: |
+          VERSION=${{ steps.get-latest-release.outputs.tag_name }}
+          echo "Updating version to $VERSION"
+          if [ -n "$VERSION" ]; then
+            make update-version VERSION=$VERSION
+          fi
+
+      - name: Update main branch with the new version
+        run: |
+          git checkout main
+          if git diff --quiet; then
+            echo "No changes detected. No commit or push will be performed."
+          else
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+            git add .
+            git commit -m "chore: Update version to ${{ steps.get-latest-release.outputs.tag_name }}"
+            git push origin main
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

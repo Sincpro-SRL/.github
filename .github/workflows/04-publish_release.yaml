@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: ${{ fromJSON(inputs.environments) }}
+        env: ${{ inputs.environments && fromJSON(inputs.environments) || fromJSON('["CI/CD"]') }}
 
     steps:
       - name: Checkout code
