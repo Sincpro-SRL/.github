@@ -36,5 +36,5 @@ jobs:
     name: Update project version
     needs: release_draft
     if: needs.release_draft.result == 'success'
-    uses: Sincpro-SRL/.github/.github/workflows/03.01-update_project.yaml@main
+    uses: Sincpro-SRL/.github/.github/workflows/03.01-update_version.yaml@main
     secrets: inherit
