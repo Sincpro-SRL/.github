@@ -5,6 +5,12 @@ on:
     types: [published]
 
   workflow_call:
+    inputs:
+      environments:
+        description: 'JSON array of string values to iterate (e.g., ''["pypi", "gemfury"]'' or ''["npm", "docker"]''). Each string becomes matrix.env and is passed to prepare-env as environment.'
+        required: false
+        type: string
+        default: '["default"]'
 
 env:
   GEMFURY_PUSH_TOKEN: ${{ secrets.GEMFURY_PUSH_TOKEN }}
@@ -12,8 +18,13 @@ env:
 
 jobs:
   publish_package:
-    name: Release Process
+    name: Release Process (${{ matrix.env }})
     runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        env: ${{ fromJSON(inputs.environments) }}
 
     steps:
       - name: Checkout code
@@ -21,6 +32,8 @@ jobs:
 
       - name: Prepare environment
         uses: ./.github/actions/prepare-env
+        with:
+          environment: ${{ matrix.env }}
 
       - name: Initialize dependencies
         run: make init

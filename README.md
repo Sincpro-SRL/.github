@@ -198,22 +198,33 @@ deploy:
 
 ### 2. 🔧 Use Environment Preparation Action
 
-All workflows **MUST** start with the environment preparation action:
+The `prepare-env` action now accepts **any environment string** for maximum flexibility:
 
 ```yaml
+# Basic usage (default)
 - name: Prepare Environment
   uses: Sincpro-SRL/.github/.github/actions/prepare-env@v1
+  with:
+    environment: "default"
+
+# Custom environment strings
+- name: Prepare Environment
+  uses: Sincpro-SRL/.github/.github/actions/prepare-env@v1
+  with:
+    environment: "python-3.11"
+
+# Environment-specific configurations
+- name: Prepare Environment
+  uses: Sincpro-SRL/.github/.github/actions/prepare-env@v1
+  with:
+    environment: "production"
 ```
 
-This action ensures consistent tooling across all repositories:
+### 3. 🔄 Use Reusable Workflows with Environments
 
-- **Python 3.12** with pip and yamllint
-- **Node.js 22** with npm and prettier
-- **Verified installation** of all formatting/linting tools
+Our workflows now support **environments matrix** for flexible testing and deployment:
 
-### 3. 🔄 Implement Reusable Workflows
-
-Use our standardized workflows in your `.github/workflows/`:
+#### Code Validation Workflow
 
 ```yaml
 # .github/workflows/pr-check.yml
@@ -223,21 +234,142 @@ on:
     branches: [main]
 
 jobs:
+  # Single environment (default)
   check:
-    uses: Sincpro-SRL/.github/.github/workflows/02-check-code.yaml@v1
+    uses: Sincpro-SRL/.github/.github/workflows/02-check_code.yaml@v1
     secrets: inherit
 
-# .github/workflows/release.yml
-name: Release Process
-on:
-  push:
-    branches: [main]
+  # Multiple environments (matrix execution)
+  check_matrix:
+    uses: Sincpro-SRL/.github/.github/workflows/02-check_code.yaml@v1
+    with:
+      environments: '["dev", "staging", "prod"]'
+    secrets: inherit
 
-jobs:
-  release:
-    uses: Sincpro-SRL/.github/.github/workflows/03-release_draft.yaml@v1
+  # Version testing
+  check_versions:
+    uses: Sincpro-SRL/.github/.github/workflows/02-check_code.yaml@v1
+    with:
+      environments: '["python-3.11", "python-3.12", "node-20"]'
     secrets: inherit
 ```
+
+#### Release Publication Workflow
+
+```yaml
+# .github/workflows/publish.yml
+name: Publish Release
+on:
+  release:
+    types: [published]
+
+jobs:
+  # Single registry (default)
+  publish:
+    uses: Sincpro-SRL/.github/.github/workflows/04-publish-release-process.yaml@v1
+    secrets: inherit
+
+  # Multiple registries (parallel publication)
+  publish_multi:
+    uses: Sincpro-SRL/.github/.github/workflows/04-publish-release-process.yaml@v1
+    with:
+      environments: '["pypi", "npm", "docker-hub"]'
+    secrets: inherit
+
+  # Environment-specific publication
+  publish_envs:
+    uses: Sincpro-SRL/.github/.github/workflows/04-publish-release-process.yaml@v1
+    with:
+      environments: '["staging", "production"]'
+    secrets: inherit
+```
+
+#### Key Environment Patterns
+
+| Pattern Type     | Example Environments                        | Use Case                             |
+| ---------------- | ------------------------------------------- | ------------------------------------ |
+| **Default**      | `["default"]`                               | Single execution with standard setup |
+| **Versions**     | `["python-3.11", "python-3.12", "node-20"]` | Test multiple language versions      |
+| **Environments** | `["dev", "staging", "prod"]`                | Environment-specific configurations  |
+| **Registries**   | `["pypi", "npm", "docker-hub"]`             | Publish to multiple targets          |
+| **Platforms**    | `["github-packages", "artifactory"]`        | Platform-specific deployment         |
+
+This action ensures consistent tooling across all repositories while allowing environment-specific customization.
+
+## 🎮 Environment Matrix Pattern
+
+Our workflows now use a simplified **environments matrix pattern** for maximum flexibility:
+
+### 🔧 How It Works
+
+1. **Single Variable**: Pass `environments` as JSON array of strings
+2. **Matrix Iteration**: Each string becomes `matrix.env`
+3. **Direct Pass-through**: Value goes directly to `prepare-env` action
+4. **Simple Configuration**: No complex JSON objects, just strings
+
+### 📋 Environment String Examples
+
+| Environment Type | Example Values                      | Use Case                        |
+| ---------------- | ----------------------------------- | ------------------------------- |
+| **Default**      | `["default"]`                       | Standard single execution       |
+| **Versions**     | `["python-3.11", "python-3.12"]`    | Test multiple language versions |
+| **Stages**       | `["dev", "staging", "prod"]`        | Environment-specific configs    |
+| **Registries**   | `["pypi", "npm", "docker-hub"]`     | Multiple publication targets    |
+| **Custom**       | `["minimal", "full", "enterprise"]` | Any custom configuration        |
+
+### 🔄 Usage Examples
+
+#### Check Code Workflow
+
+```yaml
+# Single environment (default)
+uses: org/repo/.github/workflows/02-check_code.yaml
+
+# Multiple environments
+uses: org/repo/.github/workflows/02-check_code.yaml
+with:
+  environments: '["dev", "staging", "prod"]'
+
+# Version matrix
+uses: org/repo/.github/workflows/02-check_code.yaml
+with:
+  environments: '["python-3.11", "python-3.12", "node-20"]'
+```
+
+#### Publish Release Workflow
+
+```yaml
+# Single publication (default)
+uses: org/repo/.github/workflows/04-publish-release-process.yaml
+
+# Multiple registries (parallel)
+uses: org/repo/.github/workflows/04-publish-release-process.yaml
+with:
+  environments: '["pypi", "npm", "docker-hub"]'
+
+# Environment-specific
+uses: org/repo/.github/workflows/04-publish-release-process.yaml
+with:
+  environments: '["staging", "production"]'
+```
+
+#### Prepare-Env Action
+
+```yaml
+# The action receives the environment string directly
+- name: Prepare environment
+  uses: org/repo/.github/actions/prepare-env@v1
+  with:
+    environment: ${{ matrix.env }} # String from environments array
+```
+
+### ✅ Benefits
+
+- **🎯 Simple**: Just pass array of strings
+- **🔄 Flexible**: Any string value works
+- **⚡ Fast**: Parallel execution with matrix
+- **🧩 Modular**: Each environment is independent
+- **📝 Clear**: No complex JSON configuration
 
 ## ✅ Best Practices for Repository Integration
 
