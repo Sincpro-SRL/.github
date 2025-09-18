@@ -9,6 +9,7 @@ on:
 
 jobs:
   start_labeling:
+    name: Add labels to PR
     runs-on: ubuntu-24.04
     steps:
       # Drafts your next release notes as pull requests that are merged into "main"
