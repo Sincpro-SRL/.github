@@ -12,11 +12,22 @@ on:
       - main
 
   workflow_call:
+    inputs:
+      environments:
+        description: 'JSON array of string values to iterate (e.g., ''["dev", "staging", "prod"]'' or ''["python-3.11", "python-3.12"]''). Each string becomes matrix.env and is passed to prepare-env as environment.'
+        required: false
+        type: string
+        default: '["default"]'
 
 jobs:
   checks:
-    name: Run formatting & lint checks
+    name: Run checks (${{ matrix.env }})
     runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        env: ${{ fromJSON(inputs.environments) }}
 
     steps:
       - name: Checkout code
@@ -24,6 +35,8 @@ jobs:
 
       - name: Prepare environment
         uses: ./.github/actions/prepare-env
+        with:
+          environment: ${{ matrix.env }}
 
       - name: Initialize dependencies
         run: make init

@@ -1,9 +1,22 @@
-name: "Default Environment Preparation"
-description: "Installs essential tools: pip, npm, prettier, yamllint for formatting and linting"
+name: "Environment Preparation"
+description: "Prepares environment based on any configuration value"
+
+inputs:
+  environment:
+    description: "Environment string (e.g., 'default', 'python-3.11', 'dev', 'staging')"
+    required: false
+    default: "default"
 
 runs:
   using: "composite"
   steps:
+    - name: Parse and setup environment
+      shell: bash
+      run: |
+        ENV="${{ inputs.environment }}"
+        echo "🎯 Environment: ${ENV}"
+        echo "🔧 Using environment: ${ENV}"
+
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
@@ -30,7 +43,7 @@ runs:
     - name: Verify installation
       shell: bash
       run: |
-        echo "Verification complete:"
+        echo "Verification complete with environment: ${{ inputs.environment }}"
         echo "✓ Python: $(python --version)"
         echo "✓ pip: $(pip --version)"
         echo "✓ Node: $(node --version)"
