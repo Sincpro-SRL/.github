@@ -25,7 +25,7 @@ env:
 
 jobs:
   checks:
-    name: Run checks (${{ matrix.env }})
+    name: Check code (${{ matrix.env }})
     runs-on: ubuntu-24.04
 
     strategy:
