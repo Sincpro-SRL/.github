@@ -44,6 +44,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   update_project_version:
+    needs: release_draft
     name: Update project version
     runs-on: ubuntu-24.04
 
