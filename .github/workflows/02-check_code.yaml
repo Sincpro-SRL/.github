@@ -19,6 +19,10 @@ on:
         type: string
         default: '["default"]'
 
+env:
+  GEMFURY_PUSH_TOKEN: ${{ secrets.GEMFURY_PUSH_TOKEN }}
+  POETRY_PYPI_TOKEN: ${{ secrets.POETRY_PYPI_TOKEN }}
+
 jobs:
   checks:
     name: Run checks (${{ matrix.env }})
