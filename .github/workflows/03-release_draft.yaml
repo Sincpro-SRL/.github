@@ -81,10 +81,15 @@ jobs:
               repo: context.repo.repo,
             });
 
-            // Filter releases only from the current branch
-            const branchReleases = allReleases.data.filter(release => 
-              release.target_commitish === currentBranch
-            );
+            // Filter releases only from the current branch with null check
+            const branchReleases = allReleases.data.filter(release => {
+              if (!release.target_commitish) {
+                return false;
+              }
+              return release.target_commitish === currentBranch;
+            });
+
+            core.info(`Found ${branchReleases.length} releases for branch: ${currentBranch}`);
 
             if (branchReleases.length === 0) {
               core.info(`No previous releases found for branch: ${currentBranch}`);
@@ -93,7 +98,7 @@ jobs:
             }
             const latestRelease = branchReleases[0];
             const tagName = latestRelease.tag_name;
-            core.info(`Latest release tag name: ${tagName}`);
+            core.info(`Latest release tag name: ${tagName} (commitish: ${latestRelease.target_commitish})`);
             const sanitizedTagName = tagName.replace(/[^0-9.]/g, '');
             core.info(`version to update: ${sanitizedTagName}`);
             core.setOutput('tag_name', sanitizedTagName);
