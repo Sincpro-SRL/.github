@@ -28,27 +28,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Ensure tags are present
+        run: |
+          git fetch --tags --force
+
       - name: Determine branch context
         id: branch-context
         run: |
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
-
-      - name: Get last version from tags
-        id: last-version
-        run: |
-          # Get the last tag reachable from current branch
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-
-          if [ -n "$LAST_TAG" ]; then
-            echo "tag=$LAST_TAG" >> $GITHUB_OUTPUT
-            echo "has_tag=true" >> $GITHUB_OUTPUT
-            echo "✅ Found last tag: $LAST_TAG"
-          else
-            echo "tag=" >> $GITHUB_OUTPUT
-            echo "has_tag=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ No tags found on this branch (new repository or branch)"
-          fi
 
       - name: Verify Author
         id: check-author
