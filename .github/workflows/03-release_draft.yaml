@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - "release/**"
   workflow_call:
     inputs:
       environments:
@@ -25,6 +26,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      - name: Determine branch context
+        id: branch-context
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
       - name: Verify Author
         id: check-author
         run: |
@@ -40,6 +47,7 @@ jobs:
         uses: release-drafter/release-drafter@v5
         with:
           disable-autolabeler: true
+          commitish: ${{ steps.branch-context.outputs.branch }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -47,7 +55,6 @@ jobs:
     needs: release_draft
     name: Update project version
     runs-on: ubuntu-24.04
-
     strategy:
       fail-fast: false
       matrix:
@@ -57,24 +64,41 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Determine branch context
+        id: branch-context
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
       - name: Get latest release version
         id: get-latest-release
         uses: actions/github-script@v6
         with:
           script: |
+            const currentBranch = '${{ steps.branch-context.outputs.branch }}';
             const allReleases = await github.rest.repos.listReleases({
               owner: context.repo.owner,
               repo: context.repo.repo,
             });
 
-            if (allReleases.data.length === 0) {
-              core.info('No previous releases found');
+            // Filter releases only from the current branch with null check
+            const branchReleases = allReleases.data.filter(release => {
+              if (!release.target_commitish) {
+                return false;
+              }
+              return release.target_commitish === currentBranch;
+            });
+
+            core.info(`Found ${branchReleases.length} releases for branch: ${currentBranch}`);
+
+            if (branchReleases.length === 0) {
+              core.info(`No previous releases found for branch: ${currentBranch}`);
               core.setOutput('tag_name', '');
               return;
             }
-            const latestRelease = allReleases.data[0];
+            const latestRelease = branchReleases[0];
             const tagName = latestRelease.tag_name;
-            core.info(`Latest release tag name: ${tagName}`);
+            core.info(`Latest release tag name: ${tagName} (commitish: ${latestRelease.target_commitish})`);
             const sanitizedTagName = tagName.replace(/[^0-9.]/g, '');
             core.info(`version to update: ${sanitizedTagName}`);
             core.setOutput('tag_name', sanitizedTagName);
@@ -92,9 +116,10 @@ jobs:
             make update-version VERSION=$VERSION
           fi
 
-      - name: Update main branch with the new version
+      - name: Update branch with the new version
         run: |
-          git checkout main
+          BRANCH_NAME="${{ steps.branch-context.outputs.branch }}"
+          git checkout "$BRANCH_NAME"
           if git diff --quiet; then
             echo "No changes detected. No commit or push will be performed."
           else
@@ -102,7 +127,7 @@ jobs:
             git config user.email "actions@github.com"
             git add .
             git commit -m "chore: Update version to ${{ steps.get-latest-release.outputs.tag_name }}"
-            git push origin main
+            git push origin "$BRANCH_NAME"
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
