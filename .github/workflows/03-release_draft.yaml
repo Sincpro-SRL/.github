@@ -75,30 +75,19 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const currentBranch = '${{ steps.branch-context.outputs.branch }}';
             const allReleases = await github.rest.repos.listReleases({
               owner: context.repo.owner,
               repo: context.repo.repo,
             });
 
-            // Filter releases only from the current branch with null check
-            const branchReleases = allReleases.data.filter(release => {
-              if (!release.target_commitish) {
-                return false;
-              }
-              return release.target_commitish === currentBranch;
-            });
-
-            core.info(`Found ${branchReleases.length} releases for branch: ${currentBranch}`);
-
-            if (branchReleases.length === 0) {
-              core.info(`No previous releases found for branch: ${currentBranch}`);
+            if (allReleases.data.length === 0) {
+              core.info('No previous releases found');
               core.setOutput('tag_name', '');
               return;
             }
-            const latestRelease = branchReleases[0];
+            const latestRelease = allReleases.data[0];
             const tagName = latestRelease.tag_name;
-            core.info(`Latest release tag name: ${tagName} (commitish: ${latestRelease.target_commitish})`);
+            core.info(`Latest release tag name: ${tagName}`);
             const sanitizedTagName = tagName.replace(/[^0-9.]/g, '');
             core.info(`version to update: ${sanitizedTagName}`);
             core.setOutput('tag_name', sanitizedTagName);
