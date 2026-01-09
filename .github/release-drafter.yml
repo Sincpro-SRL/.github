@@ -5,10 +5,10 @@ tag-template: "v$RESOLVED_VERSION"
 categories:
   - title: "🚀 Features"
     label: "feature"
-  - title: "🛠️ Maintenance"
-    label: "maintenance"
   - title: "🐛 Bug Fixes"
     label: "bug"
+  - title: "🛠️ Maintenance"
+    label: "maintenance"
 
 version-resolver:
   major:
