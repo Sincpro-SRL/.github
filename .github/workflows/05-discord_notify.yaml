@@ -1,0 +1,112 @@
+name: Discord Notification
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+  release:
+    types: [published]
+
+  push:
+    branches:
+      - main
+
+  workflow_call:
+    inputs:
+      webhook_url:
+        description: >
+          Discord webhook URL. Used as fallback when the DISCORD_WEBHOOK_URL secret is not set.
+          Intended for repos that cannot use GitHub secrets (e.g., private isolated repos).
+        required: false
+        type: string
+        default: ""
+    secrets:
+      DISCORD_WEBHOOK_URL:
+        description: "Discord webhook URL secret (takes priority over webhook_url input)"
+        required: false
+
+jobs:
+  notify:
+    name: Send Discord Notification
+    runs-on: ubuntu-24.04
+    permissions: {}
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
+    steps:
+      - name: Send Discord notification
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL || inputs.webhook_url }}
+          GH_REPO: ${{ github.repository }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_EVENT: ${{ github.event_name }}
+          GH_SHA: ${{ github.sha }}
+          GH_REF: ${{ github.ref_name }}
+          GH_PR_TITLE: ${{ github.event.pull_request.title }}
+          GH_PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_RELEASE_TAG: ${{ github.event.release.tag_name }}
+          GH_RELEASE_URL: ${{ github.event.release.html_url }}
+        run: |
+          if [ -z "$WEBHOOK" ]; then
+            echo "⚠️ No Discord webhook URL configured. Set DISCORD_WEBHOOK_URL secret or pass webhook_url input."
+            exit 0
+          fi
+
+          SHORT_SHA="${GH_SHA:0:7}"
+
+          if [ "$GH_EVENT" = "pull_request" ]; then
+            LINK="$GH_PR_URL"
+            DESCRIPTION="PR #${GH_PR_NUMBER} merged: ${GH_PR_TITLE}"
+            COLOR=3066993
+          elif [ "$GH_EVENT" = "release" ]; then
+            LINK="$GH_RELEASE_URL"
+            DESCRIPTION="Release ${GH_RELEASE_TAG} published"
+            COLOR=16766720
+          else
+            LINK="https://github.com/${GH_REPO}/commit/${GH_SHA}"
+            DESCRIPTION="Push to ${GH_REF} by ${GH_ACTOR}"
+            COLOR=3447003
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg title "[${GH_REPO}] ${GH_EVENT}" \
+            --arg description "$DESCRIPTION" \
+            --arg repo "$GH_REPO" \
+            --arg actor "$GH_ACTOR" \
+            --arg sha "$SHORT_SHA" \
+            --arg ref "$GH_REF" \
+            --arg event "$GH_EVENT" \
+            --arg link "$LINK" \
+            --argjson color "$COLOR" \
+            '{
+              embeds: [{
+                title: $title,
+                description: $description,
+                color: $color,
+                url: $link,
+                fields: [
+                  {name: "Repository", value: $repo, inline: true},
+                  {name: "Actor", value: $actor, inline: true},
+                  {name: "Commit", value: $sha, inline: true},
+                  {name: "Branch/Tag", value: $ref, inline: true},
+                  {name: "Event", value: $event, inline: true}
+                ]
+              }]
+            }')
+
+          TMPFILE=$(mktemp)
+          curl -s -o /dev/null -w "%{http_code}" -X POST "$WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" > "$TMPFILE"
+          STATUS=$(cat "$TMPFILE")
+          rm -f "$TMPFILE"
+          case "$STATUS" in
+            2[0-9][0-9])
+              echo "✅ Discord notification sent successfully (HTTP $STATUS)"
+              ;;
+            *)
+              echo "❌ Discord notification failed with HTTP status: $STATUS"
+              exit 1
+              ;;
+          esac
