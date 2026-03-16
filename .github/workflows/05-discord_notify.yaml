@@ -69,6 +69,9 @@ jobs:
             COLOR=3447003
           fi
 
+          DESCRIPTION=$(echo "$DESCRIPTION" | \
+            sed -E 's/([A-Z]{2,6}-[0-9]{1,6}-[0-9]{1,6})/[\1](https:\/\/notion.so\/sincpro\/\1)/g')
+
           PAYLOAD=$(jq -n \
             --arg title "[${GH_REPO}] ${GH_EVENT}" \
             --arg description "$DESCRIPTION" \
