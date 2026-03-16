@@ -97,12 +97,12 @@ make deploy        # Deploy services (if applicable)
 | **Merge**        | Push to main | `init` → `verify-format` → `test` → `update-version` | `prepare-env@v1` | Draft created       |
 | **Release**      | Publish      | `init` → `publish` → `deploy`                        | `prepare-env@v1` | Artifacts published |
 
-| Stage            | Trigger      | Actions                                      | Status     | Result              |
-| ---------------- | ------------ | -------------------------------------------- | ---------- | ------------------- |
-| **Pull Request** | Open/Update  | Code Style + Tests                           | ✅ Pass    | Label added         |
-| **Merge**        | Push to main | Code Style + Tests + Version + Release Draft | 🔄 Process | Draft created       |
-| **Release**      | Publish      | Deploy/Publish                               | 🚀 Deploy  | Artifacts published |
-| **Notification** | PR Merge / Release / Push to main | Discord webhook notification | —  | Team notified       |
+| Stage            | Trigger                           | Actions                                      | Status     | Result              |
+| ---------------- | --------------------------------- | -------------------------------------------- | ---------- | ------------------- |
+| **Pull Request** | Open/Update                       | Code Style + Tests                           | ✅ Pass    | Label added         |
+| **Merge**        | Push to main                      | Code Style + Tests + Version + Release Draft | 🔄 Process | Draft created       |
+| **Release**      | Publish                           | Deploy/Publish                               | 🚀 Deploy  | Artifacts published |
+| **Notification** | PR Merge / Release / Push to main | Discord webhook notification                 | —          | Team notified       |
 
 ## 🔄 Development Flow
 
@@ -149,15 +149,15 @@ graph LR
 
 ## 📦 Responsibilities Matrix
 
-| Component              | Responsibility              | Reusable | Configurable |
-| ---------------------- | --------------------------- | -------- | ------------ |
-| **Code Style**         | Format and linting          | ✅       | ✅           |
-| **Test Runner**        | Execute tests               | ✅       | ✅           |
-| **PR Labeler**         | Automatic labeling          | ✅       | ✅           |
-| **Version Manager**    | Semantic versioning         | ✅       | ✅           |
-| **Release Drafter**    | Changelog generation        | ✅       | ✅           |
-| **Publisher**          | Deploy to registries        | ✅       | ✅           |
-| **Discord Notifier**   | Team notifications via chat | ✅       | ✅           |
+| Component            | Responsibility              | Reusable | Configurable |
+| -------------------- | --------------------------- | -------- | ------------ |
+| **Code Style**       | Format and linting          | ✅       | ✅           |
+| **Test Runner**      | Execute tests               | ✅       | ✅           |
+| **PR Labeler**       | Automatic labeling          | ✅       | ✅           |
+| **Version Manager**  | Semantic versioning         | ✅       | ✅           |
+| **Release Drafter**  | Changelog generation        | ✅       | ✅           |
+| **Publisher**        | Deploy to registries        | ✅       | ✅           |
+| **Discord Notifier** | Team notifications via chat | ✅       | ✅           |
 
 ## 🔔 Discord Notifications
 
@@ -165,11 +165,11 @@ The `05-discord_notify.yaml` reusable workflow sends rich embed notifications to
 
 ### 🎯 Trigger Events
 
-| Event                    | Condition                               | Embed Color |
-| ------------------------ | --------------------------------------- | ----------- |
-| `pull_request` (closed)  | Only when `merged == true`              | 🟢 Green    |
-| `release` (published)    | Always                                  | 🟡 Gold     |
-| `push`                   | Only on the `main` branch               | 🔵 Blue     |
+| Event                   | Condition                  | Embed Color |
+| ----------------------- | -------------------------- | ----------- |
+| `pull_request` (closed) | Only when `merged == true` | 🟢 Green    |
+| `release` (published)   | Always                     | 🟡 Gold     |
+| `push`                  | Only on the `main` branch  | 🔵 Blue     |
 
 ### 🔐 Webhook Resolution Strategy
 
@@ -238,16 +238,16 @@ jobs:
 
 Each Discord notification includes an embed with the following fields:
 
-| Field         | Description                                           |
-| ------------- | ----------------------------------------------------- |
-| **Title**     | `[org/repo] <event_name>`                             |
-| **URL**       | Link to the PR, Release, or commit                    |
-| **Description** | Human-readable summary of the event                |
-| **Repository** | Full `owner/repo` name                               |
-| **Actor**     | GitHub username that triggered the event              |
-| **Commit**    | Short (7-char) commit SHA                             |
-| **Branch/Tag** | `ref_name` (branch name or tag)                     |
-| **Event**     | Raw GitHub event name                                 |
+| Field           | Description                              |
+| --------------- | ---------------------------------------- |
+| **Title**       | `[org/repo] <event_name>`                |
+| **URL**         | Link to the PR, Release, or commit       |
+| **Description** | Human-readable summary of the event      |
+| **Repository**  | Full `owner/repo` name                   |
+| **Actor**       | GitHub username that triggered the event |
+| **Commit**      | Short (7-char) commit SHA                |
+| **Branch/Tag**  | `ref_name` (branch name or tag)          |
+| **Event**       | Raw GitHub event name                    |
 
 ## 🛠️ Required Implementation for All Repositories
 
