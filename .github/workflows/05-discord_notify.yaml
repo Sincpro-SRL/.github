@@ -61,7 +61,7 @@ jobs:
             COLOR=3066993
           elif [ "$GH_EVENT" = "release" ]; then
             LINK="$GH_RELEASE_URL"
-            DESCRIPTION="Release ${GH_RELEASE_TAG} published"
+            DESCRIPTION="[Release ${GH_RELEASE_TAG} published](${GH_RELEASE_URL})"
             COLOR=16766720
           else
             LINK="https://github.com/${GH_REPO}/commit/${GH_SHA}"
