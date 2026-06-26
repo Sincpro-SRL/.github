@@ -16,6 +16,7 @@ env:
   GEMFURY_PUSH_TOKEN: ${{ secrets.GEMFURY_PUSH_TOKEN }}
   POETRY_PYPI_TOKEN: ${{ secrets.POETRY_PYPI_TOKEN }}
   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+  CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
 jobs:
   publish_package:
