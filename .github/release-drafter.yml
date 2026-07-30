@@ -9,7 +9,10 @@ categories:
     label: "bug"
   - title: "🛠️ Maintenance"
     label: "maintenance"
-
+  - title: "🧪 Experimental"
+    label: "experimental"
+  - title: "🔧 Refine"
+    label: "refine"
 version-resolver:
   major:
     labels:
@@ -21,6 +24,8 @@ version-resolver:
     labels:
       - "maintenance"
       - "bug"
+      - "experimental"
+      - "refine"
   default: patch
 
 replacers:
@@ -31,12 +36,22 @@ autolabeler:
   - label: "maintenance"
     title:
       - "/^chore.+/i"
+      - "/^refactor.+/i"
   - label: "bug"
     title:
       - "/^fix.+/i"
   - label: "feature"
     title:
       - "/^feat.+/i"
+  - label: "experimental"
+    title:
+      - "/^experimental.+/i"
+      - "/^preview.+/i"
+  - label: "refine"
+    title:
+      - "/^refine.+/i"
+      - "/^wip.+/i"
+      - "/^fixup.+/i"
   - label: "major"
     title:
       - "/^major.+/i"
