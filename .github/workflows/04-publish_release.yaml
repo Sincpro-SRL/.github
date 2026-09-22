@@ -11,6 +11,11 @@ on:
         required: false
         type: string
         default: '["default"]'
+      runs_on:
+        description: 'Target runner. Must be valid JSON, quotes included — a plain label (''"ubuntu-24.04"'') or a JSON array of labels (''["self-hosted", "ci-runner"]'') for self-hosted runners. Passing an unquoted value like ''self-hosted'' will fail.'
+        required: false
+        type: string
+        default: '"ubuntu-24.04"'
 
 env:
   GEMFURY_PUSH_TOKEN: ${{ secrets.GEMFURY_PUSH_TOKEN }}
@@ -21,7 +26,7 @@ env:
 jobs:
   publish_package:
     name: Release Process (${{ matrix.env }})
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runs_on && fromJSON(inputs.runs_on) || 'ubuntu-24.04' }}
 
     strategy:
       fail-fast: false

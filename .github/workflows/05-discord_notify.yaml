@@ -22,6 +22,11 @@ on:
         required: false
         type: string
         default: ""
+      runs_on:
+        description: 'Target runner. Must be valid JSON, quotes included — a plain label (''"ubuntu-24.04"'') or a JSON array of labels (''["self-hosted", "ci-runner"]'') for self-hosted runners. Passing an unquoted value like ''self-hosted'' will fail.'
+        required: false
+        type: string
+        default: '"ubuntu-24.04"'
     secrets:
       DISCORD_WEBHOOK_URL:
         description: "Discord webhook URL secret (takes priority over webhook_url input)"
@@ -30,7 +35,7 @@ on:
 jobs:
   notify:
     name: Send Discord Notification
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runs_on && fromJSON(inputs.runs_on) || 'ubuntu-24.04' }}
     permissions: {}
     if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
     steps:

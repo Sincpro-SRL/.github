@@ -5,12 +5,18 @@ on:
     # Only following types are handled by the action, but one can default to all as well
     types: [opened, reopened, synchronize]
 
-  workflow_call: {}
+  workflow_call:
+    inputs:
+      runs_on:
+        description: 'Target runner. Must be valid JSON, quotes included — a plain label (''"ubuntu-24.04"'') or a JSON array of labels (''["self-hosted", "ci-runner"]'') for self-hosted runners. Passing an unquoted value like ''self-hosted'' will fail.'
+        required: false
+        type: string
+        default: '"ubuntu-24.04"'
 
 jobs:
   start_labeling:
     name: Add labels to PR
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runs_on && fromJSON(inputs.runs_on) || 'ubuntu-24.04' }}
     steps:
       # Drafts your next release notes as pull requests that are merged into "main"
       - uses: release-drafter/release-drafter@v5

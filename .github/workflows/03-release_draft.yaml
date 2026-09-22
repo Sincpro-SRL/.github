@@ -12,6 +12,11 @@ on:
         required: false
         type: string
         default: '["default"]'
+      runs_on:
+        description: 'Target runner. Must be valid JSON, quotes included — a plain label (''"ubuntu-24.04"'') or a JSON array of labels (''["self-hosted", "ci-runner"]'') for self-hosted runners. Passing an unquoted value like ''self-hosted'' will fail.'
+        required: false
+        type: string
+        default: '"ubuntu-24.04"'
 
 jobs:
   release_draft:
@@ -21,7 +26,7 @@ jobs:
         env: ${{ inputs.environments && fromJSON(inputs.environments) || fromJSON('["CI/CD"]') }}
 
     name: Create / Update draft release
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runs_on && fromJSON(inputs.runs_on) || 'ubuntu-24.04' }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -60,7 +65,7 @@ jobs:
   update_project_version:
     needs: release_draft
     name: Update project version
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runs_on && fromJSON(inputs.runs_on) || 'ubuntu-24.04' }}
     strategy:
       fail-fast: false
       matrix:
