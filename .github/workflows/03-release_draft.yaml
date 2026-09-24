@@ -13,10 +13,15 @@ on:
         type: string
         default: '["default"]'
       runs_on:
-        description: 'Target runner. Must be valid JSON, quotes included — a plain label (''"ubuntu-24.04"'') or a JSON array of labels (''["self-hosted", "ci-runner"]'') for self-hosted runners. Passing an unquoted value like ''self-hosted'' will fail.'
+        description: 'JSON string, e.g. "ubuntu-24.04"'
         required: false
         type: string
         default: '"ubuntu-24.04"'
+      container:
+        description: 'Optional job container as JSON: an image string (''"ghcr.io/catthehacker/ubuntu:act-24.04"'') or a container object (''{"image":"ghcr.io/catthehacker/ubuntu:act-24.04"}''). The image must provide git, make, curl and jq (see README). Leave empty to run directly on the runner. Required by ARC runners in kubernetes mode.'
+        required: false
+        type: string
+        default: ""
 
 jobs:
   release_draft:
@@ -27,9 +32,10 @@ jobs:
 
     name: Create / Update draft release
     runs-on: ${{ inputs.runs_on && fromJSON(inputs.runs_on) || 'ubuntu-24.04' }}
+    container: ${{ inputs.container && fromJSON(inputs.container) || '' }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -55,17 +61,15 @@ jobs:
 
       - name: Run Release Drafter
         if: steps.check-author.outputs.is-bot == 'false'
-        uses: release-drafter/release-drafter@v6
+        uses: release-drafter/release-drafter@v7
         with:
-          disable-autolabeler: true
           commitish: ${{ steps.branch-context.outputs.branch }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   update_project_version:
     needs: release_draft
     name: Update project version
     runs-on: ${{ inputs.runs_on && fromJSON(inputs.runs_on) || 'ubuntu-24.04' }}
+    container: ${{ inputs.container && fromJSON(inputs.container) || '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -73,7 +77,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Determine branch context
         id: branch-context
@@ -83,7 +87,7 @@ jobs:
 
       - name: Get latest release version
         id: get-latest-release
-        uses: actions/github-script@v6
+        uses: actions/github-script@v9
         with:
           script: |
             const allReleases = await github.rest.repos.listReleases({

@@ -12,10 +12,15 @@ on:
         type: string
         default: '["default"]'
       runs_on:
-        description: 'Target runner. Must be valid JSON, quotes included — a plain label (''"ubuntu-24.04"'') or a JSON array of labels (''["self-hosted", "ci-runner"]'') for self-hosted runners. Passing an unquoted value like ''self-hosted'' will fail.'
+        description: 'JSON string, e.g. "ubuntu-24.04"'
         required: false
         type: string
         default: '"ubuntu-24.04"'
+      container:
+        description: 'Optional job container as JSON: an image string (''"ghcr.io/catthehacker/ubuntu:act-24.04"'') or a container object (''{"image":"ghcr.io/catthehacker/ubuntu:act-24.04"}''). The image must provide git, make, curl and jq (see README). Leave empty to run directly on the runner. Required by ARC runners in kubernetes mode.'
+        required: false
+        type: string
+        default: ""
 
 env:
   GEMFURY_PUSH_TOKEN: ${{ secrets.GEMFURY_PUSH_TOKEN }}
@@ -27,6 +32,7 @@ jobs:
   publish_package:
     name: Release Process (${{ matrix.env }})
     runs-on: ${{ inputs.runs_on && fromJSON(inputs.runs_on) || 'ubuntu-24.04' }}
+    container: ${{ inputs.container && fromJSON(inputs.container) || '' }}
 
     strategy:
       fail-fast: false
@@ -35,7 +41,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Prepare environment
         uses: ./.github/actions/prepare-env

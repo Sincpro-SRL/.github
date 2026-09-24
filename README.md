@@ -358,19 +358,19 @@ on:
 jobs:
   # Single registry (default)
   publish:
-    uses: Sincpro-SRL/.github/.github/workflows/04-publish-release-process.yaml@v1
+    uses: Sincpro-SRL/.github/.github/workflows/04-publish_release.yaml@v1
     secrets: inherit
 
   # Multiple registries (parallel publication)
   publish_multi:
-    uses: Sincpro-SRL/.github/.github/workflows/04-publish-release-process.yaml@v1
+    uses: Sincpro-SRL/.github/.github/workflows/04-publish_release.yaml@v1
     with:
       environments: '["pypi", "npm", "docker-hub"]'
     secrets: inherit
 
   # Environment-specific publication
   publish_envs:
-    uses: Sincpro-SRL/.github/.github/workflows/04-publish-release-process.yaml@v1
+    uses: Sincpro-SRL/.github/.github/workflows/04-publish_release.yaml@v1
     with:
       environments: '["staging", "production"]'
     secrets: inherit
@@ -387,6 +387,134 @@ jobs:
 | **Platforms**    | `["github-packages", "artifactory"]`        | Platform-specific deployment         |
 
 This action ensures consistent tooling across all repositories while allowing environment-specific customization.
+
+## 🖥️ Runner Selection: GitHub-hosted or Self-hosted
+
+Every reusable workflow accepts two optional inputs that decide **where** the jobs run. Nothing
+is hardcoded for a specific company: callers that pass nothing run on GitHub-hosted runners.
+
+| Input       | Format (JSON, quotes included)                                                            | Default              |
+| ----------- | ----------------------------------------------------------------------------------------- | -------------------- |
+| `runs_on`   | A label `'"my-runner"'` or a label array `'["self-hosted", "x64"]'`                       | `"ubuntu-24.04"`     |
+| `container` | An image `'"<image>"'` or an object `'{"image":"<image>"}'` (see recommended image below) | empty (no container) |
+
+### a) GitHub-hosted (default)
+
+```yaml
+jobs:
+  validate:
+    uses: Sincpro-SRL/.github/.github/workflows/02-check_code.yaml@main
+    secrets: inherit
+    with:
+      environments: '["3.12"]'
+```
+
+### b) Self-hosted runner that requires a job container (ARC `kubernetes` mode)
+
+[Actions Runner Controller](https://docs.github.com/en/actions/concepts/runners/actions-runner-controller)
+in `containerMode.type: kubernetes` rejects jobs without a job container
+(_"Jobs without a job container are forbidden on this runner"_), so pass both inputs:
+
+```yaml
+jobs:
+  validate:
+    uses: Sincpro-SRL/.github/.github/workflows/02-check_code.yaml@main
+    secrets: inherit
+    with:
+      environments: '["3.12"]'
+      runs_on: '"ci-runner"' # your runner scale set name
+      container: '{"image":"<your-registry>/ci/ubuntu:act-24.04-<date>"}' # mirror of the recommended image
+```
+
+Pass the same two inputs to **every** shared workflow the repository calls (`01` … `05`).
+`secrets: inherit` forwards secrets only, never inputs.
+
+### c) Switch runners with variables, without editing YAML
+
+`vars` is allowed inside `with:`, so the choice can live in repository or organization
+variables (_Settings → Secrets and variables → Actions → Variables_):
+
+```yaml
+with:
+  environments: '["3.12"]'
+  runs_on: ${{ vars.CI_RUNS_ON || '"ubuntu-24.04"' }}
+  container: ${{ vars.CI_CONTAINER || '' }}
+```
+
+| Variable       | Example value                                       |
+| -------------- | --------------------------------------------------- |
+| `CI_RUNS_ON`   | `"ci-runner"`                                       |
+| `CI_CONTAINER` | `{"image":"ghcr.io/catthehacker/ubuntu:act-24.04"}` |
+
+Delete the variables to go back to GitHub-hosted runners.
+
+### 🐳 Recommended job container image
+
+To keep self-hosted jobs as close as possible to GitHub-hosted `ubuntu-24.04` (so a repository
+can switch between both without surprises), use
+[`ghcr.io/catthehacker/ubuntu:act-24.04`](https://github.com/catthehacker/docker_images).
+
+- It is the medium image used by [`nektos/act`](https://github.com/nektos/act) to run GitHub
+  Actions locally, built from the scripts of [`actions/runner-images`](https://github.com/actions/runner-images).
+- Ubuntu 24.04, runs as root, multi-arch (`amd64`/`arm64`), ~580 MB compressed.
+- Ships `git`, `make`, `curl`, `jq`, `sudo`, `lsb_release`, Node.js and the libraries needed by
+  `actions/setup-python`, so jobs start immediately with nothing to install.
+
+GitHub does not publish its hosted runner images as containers (they are VM images). The full
+copy (`catthehacker/ubuntu:full-24.04`) is ~20 GB compressed and not practical for one pod per job.
+
+**Differences that remain vs. GitHub-hosted:** no Docker daemon, no preinstalled language
+versions in the tool cache (`setup-python`/`setup-node` download them) and fewer preinstalled CLIs
+(cloud CLIs, browsers, etc.). Install anything extra from your `prepare-env` or `make init`.
+
+**Mirror and pin it in your own registry** instead of pulling from `ghcr.io` on every node: it is a
+third-party image, and a private copy is faster and immutable. This copies all architectures
+without building anything:
+
+```bash
+docker buildx imagetools create \
+  --tag <your-registry>/ci/ubuntu:act-24.04-<date> \
+  ghcr.io/catthehacker/ubuntu:act-24.04@sha256:<digest>
+```
+
+Use a fixed tag (never `:latest`) so nodes reuse the cached image, and grant your cluster pull
+access to the registry (node-level registry credentials or an `imagePullSecret` on the runner
+namespace `default` service account, which is the one used by the job pods).
+
+### 🔧 What the job container image must provide
+
+The shared workflows do not install OS packages: the image passed in `container` must already
+behave like a GitHub-hosted runner. Any image you choose needs at least:
+
+| Tool / requirement | Why                                                                                                               |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `git`              | `actions/checkout` (without it the repository is downloaded without `.git`)                                       |
+| `make`             | Every workflow calls `make` targets                                                                               |
+| `curl`, `jq`       | Used by `05-discord_notify.yaml`                                                                                  |
+| Ubuntu 22.04/24.04 | `actions/setup-python` only publishes prebuilt interpreters for Ubuntu; Alpine/musl cannot run JavaScript actions |
+| root or `sudo`     | Actions and `make init` may install packages                                                                      |
+
+The recommended `act-24.04` image covers all of them. Bare images (`ubuntu:24.04`) and Debian-based
+language images (`python:3.12-bookworm`) do not.
+
+### ⚠️ Limitations
+
+| Topic                   | Detail                                                                                                                                                                |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Runner version**      | The actions used here run on Node 24 and need runner **v2.327.1+**. Keep the runner image of your scale set up to date.                                               |
+| **`container.options`** | Not supported by the ARC Kubernetes container hooks. Configure CPU/memory/securityContext in the runner scale set pod template instead.                               |
+| **Private images**      | Configure `imagePullSecrets` in the scale set (service account or hook pod template). Do not put registry credentials in the workflow: `with:` cannot read `secrets`. |
+| **Docker builds**       | ARC Kubernetes mode has no Docker daemon: `docker build` and Dockerfile-based actions do not work inside the job.                                                     |
+| **Do not disable**      | Avoid `ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER=false`: jobs would run inside the runner pod, which has Kubernetes API permissions to create pods and read secrets.       |
+
+### 🔐 Security for public repositories
+
+Self-hosted runners execute whatever code a workflow run checks out. In a **public** repository,
+a pull request from a fork runs `pull_request` workflows with the fork's code.
+
+- Use self-hosted runners only in **private** repositories, or restrict the runner group to selected repositories.
+- Require approval for workflows from outside contributors (_Settings → Actions → General_).
+- Keep GitHub-hosted runners (the default) for public repositories.
 
 ## 🎮 Environment Matrix Pattern
 
@@ -432,15 +560,15 @@ with:
 
 ```yaml
 # Single publication (default)
-uses: org/repo/.github/workflows/04-publish-release-process.yaml
+uses: org/repo/.github/workflows/04-publish_release.yaml
 
 # Multiple registries (parallel)
-uses: org/repo/.github/workflows/04-publish-release-process.yaml
+uses: org/repo/.github/workflows/04-publish_release.yaml
 with:
   environments: '["pypi", "npm", "docker-hub"]'
 
 # Environment-specific
-uses: org/repo/.github/workflows/04-publish-release-process.yaml
+uses: org/repo/.github/workflows/04-publish_release.yaml
 with:
   environments: '["staging", "production"]'
 ```
@@ -472,9 +600,9 @@ your-repository/
 ├── Makefile                 # ← REQUIRED: Standard targets
 ├── .github/
 │   └── workflows/
-│       ├── pr-check.yml     # ← Uses: 02-check-code.yaml@v1
+│       ├── pr-check.yml     # ← Uses: 02-check_code.yaml@v1
 │       ├── release.yml      # ← Uses: 03-release_draft.yaml@v1
-│       └── publish.yml      # ← Uses: 04-publish-release-process.yaml@v1
+│       └── publish.yml      # ← Uses: 04-publish_release.yaml@v1
 ├── src/                     # Your project code
 └── README.md
 ```
