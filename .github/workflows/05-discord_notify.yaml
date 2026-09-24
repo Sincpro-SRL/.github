@@ -64,7 +64,7 @@ jobs:
             exit 0
           fi
 
-          SHORT_SHA="${GH_SHA:0:7}"
+          SHORT_SHA=$(printf '%s' "$GH_SHA" | cut -c1-7)
 
           if [ "$GH_EVENT" = "pull_request" ]; then
             LINK="$GH_PR_URL"
@@ -80,7 +80,7 @@ jobs:
             COLOR=3447003
           fi
 
-          DESCRIPTION=$(echo "$DESCRIPTION" | \
+          DESCRIPTION=$(printf '%s\n' "$DESCRIPTION" | \
             sed -E 's/([A-Z]{2,6}-[0-9]{1,6}-[0-9]{1,6})/[\1](https:\/\/notion.so\/sincpro\/\1)/g')
 
           PAYLOAD=$(jq -n \
@@ -109,12 +109,9 @@ jobs:
               }]
             }')
 
-          TMPFILE=$(mktemp)
-          curl -s -o /dev/null -w "%{http_code}" -X POST "$WEBHOOK" \
+          STATUS=$(curl -sS -o /dev/null -w "%{http_code}" -X POST "$WEBHOOK" \
             -H "Content-Type: application/json" \
-            -d "$PAYLOAD" > "$TMPFILE"
-          STATUS=$(cat "$TMPFILE")
-          rm -f "$TMPFILE"
+            -d "$PAYLOAD") || true
           case "$STATUS" in
             2[0-9][0-9])
               echo "✅ Discord notification sent successfully (HTTP $STATUS)"
