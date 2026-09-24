@@ -423,7 +423,7 @@ jobs:
     with:
       environments: '["3.12"]'
       runs_on: '"ci-runner"' # your runner scale set name
-      container: '{"image":"<your-registry>/ci/ubuntu:act-24.04-<date>"}' # mirror of the recommended image
+      container: '{"image":"<your-registry>/ci/ubuntu:act-24.04-<date>","env":{"PIPX_BIN_DIR":"/usr/local/bin"}}' # mirror of the recommended image
 ```
 
 Pass the same two inputs to **every** shared workflow the repository calls (`01` … `05`).
@@ -441,10 +441,10 @@ with:
   container: ${{ vars.CI_CONTAINER || '' }}
 ```
 
-| Variable       | Example value                                       |
-| -------------- | --------------------------------------------------- |
-| `CI_RUNS_ON`   | `"ci-runner"`                                       |
-| `CI_CONTAINER` | `{"image":"ghcr.io/catthehacker/ubuntu:act-24.04"}` |
+| Variable       | Example value                                                                               |
+| -------------- | ------------------------------------------------------------------------------------------- |
+| `CI_RUNS_ON`   | `"ci-runner"`                                                                               |
+| `CI_CONTAINER` | `{"image":"ghcr.io/catthehacker/ubuntu:act-24.04","env":{"PIPX_BIN_DIR":"/usr/local/bin"}}` |
 
 Delete the variables to go back to GitHub-hosted runners.
 
@@ -466,6 +466,11 @@ copy (`catthehacker/ubuntu:full-24.04`) is ~20 GB compressed and not practical f
 **Differences that remain vs. GitHub-hosted:** no Docker daemon, no preinstalled language
 versions in the tool cache (`setup-python`/`setup-node` download them) and fewer preinstalled CLIs
 (cloud CLIs, browsers, etc.). Install anything extra from your `prepare-env` or `make init`.
+
+**Set `PIPX_BIN_DIR`** like GitHub-hosted runners do (`/opt/pipx_bin` there): in a job container
+`HOME` is `/github/home` and `~/.local/bin` is not in `PATH`, so tools installed with
+`pipx install` (poetry, pre-commit, black…) are not found. `"env":{"PIPX_BIN_DIR":"/usr/local/bin"}`
+installs them into a directory that already is in `PATH`.
 
 **Mirror and pin it in your own registry** instead of pulling from `ghcr.io` on every node: it is a
 third-party image, and a private copy is faster and immutable. This copies all architectures
