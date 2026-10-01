@@ -61,7 +61,7 @@ jobs:
 
       - name: Run Release Drafter
         if: steps.check-author.outputs.is-bot == 'false'
-        uses: release-drafter/release-drafter@v7
+        uses: release-drafter/release-drafter@v6
         with:
           commitish: ${{ steps.branch-context.outputs.branch }}
 
