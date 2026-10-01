@@ -63,7 +63,10 @@ jobs:
         if: steps.check-author.outputs.is-bot == 'false'
         uses: release-drafter/release-drafter@v6
         with:
+          disable-autolabeler: true
           commitish: ${{ steps.branch-context.outputs.branch }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   update_project_version:
     needs: release_draft
